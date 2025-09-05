@@ -12,12 +12,12 @@ import java.util.HashMap;
 public class BibliotecaImpl extends UnicastRemoteObject implements Biblioteca {
 
     private List<Livro> livros;
-    private Map<String, List<Livro>> reservas2;
+    private Map<String, List<Livro>> reservas;
 
     public BibliotecaImpl() throws RemoteException {
         super();
         this.livros = new ArrayList<>();
-        this.reservas2 = new HashMap<>();
+        this.reservas = new HashMap<>();
         livros.add(new Livro("1", "O Senhor dos Anéis"));
         livros.add(new Livro("2", "A Torre Negra"));
         livros.add(new Livro("3", "O Hobbit"));
@@ -25,7 +25,7 @@ public class BibliotecaImpl extends UnicastRemoteObject implements Biblioteca {
 
     @Override
     public List<String> listarLivrosDisponiveis() throws RemoteException {
-        List<String> livrosReservados = reservas2.values().stream()
+        List<String> livrosReservados = reservas.values().stream()
                 .flatMap(List::stream)
                 .map(Livro::getNome)
                 .collect(Collectors.toList());
@@ -47,7 +47,7 @@ public class BibliotecaImpl extends UnicastRemoteObject implements Biblioteca {
             return false;
         }
 
-        List<Livro> livrosDoUsuario = reservas2.computeIfAbsent(usuarioKey, k -> new ArrayList<>());
+        List<Livro> livrosDoUsuario = reservas.computeIfAbsent(usuarioKey, k -> new ArrayList<>());
 
         Livro livro = livros.stream()
                 .filter(l -> l.getNome().equals(titulo))
@@ -61,12 +61,12 @@ public class BibliotecaImpl extends UnicastRemoteObject implements Biblioteca {
     public boolean devolverLivro(String titulo, String usuario) throws RemoteException {
         String usuarioKey = usuario.toLowerCase();
 
-        if (reservas2.containsKey(usuarioKey)) {
-            List<Livro> livrosDoUsuario = reservas2.get(usuarioKey);
+        if (reservas.containsKey(usuarioKey)) {
+            List<Livro> livrosDoUsuario = reservas.get(usuarioKey);
             boolean removido = livrosDoUsuario.removeIf(livro -> livro.getNome().equals(titulo));
 
             if (livrosDoUsuario.isEmpty()) {
-                reservas2.remove(usuarioKey);
+                reservas.remove(usuarioKey);
             }
 
             return removido;
@@ -79,8 +79,8 @@ public class BibliotecaImpl extends UnicastRemoteObject implements Biblioteca {
     public List<String> listarLivrosUsuario(String usuario) throws RemoteException {
         String usuarioKey = usuario.toLowerCase();
 
-        if (reservas2.containsKey(usuarioKey)) {
-            return reservas2.get(usuarioKey).stream()
+        if (reservas.containsKey(usuarioKey)) {
+            return reservas.get(usuarioKey).stream()
                     .map(Livro::getNome)
                     .collect(Collectors.toList());
         }
@@ -89,7 +89,7 @@ public class BibliotecaImpl extends UnicastRemoteObject implements Biblioteca {
     }
 
     private boolean livroJaReservado(String titulo) {
-        return reservas2.values().stream()
+        return reservas.values().stream()
                 .flatMap(List::stream)
                 .anyMatch(l -> l.getNome().equals(titulo));
     }
